@@ -58,23 +58,13 @@ pub struct BookCreated {
     name: String,
 }
 
-impl BookCreated {
-    pub fn new(name: &str) -> Self {
-        Self {
-            name: String::from(name),
-        }
-    }
-
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-}
-
 #[derive(Debug, Serialize)]
 pub struct BookRenamed {}
 
 impl DomainEvent {
     pub fn book_created(name: &str) -> Self {
-        DomainEvent::BookCreated(BookCreated::new(name))
+        DomainEvent::BookCreated(BookCreated {
+            name: String::from(name),
+        })
     }
 }

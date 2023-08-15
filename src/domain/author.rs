@@ -81,20 +81,10 @@ pub struct AuthorRenamed {
     full_name: String,
 }
 
-impl AuthorRenamed {
-    pub fn new(full_name: &str) -> Self {
-        Self {
-            full_name: String::from(full_name),
-        }
-    }
-
-    pub fn full_name(&self) -> &str {
-        &self.full_name
-    }
-}
-
 impl DomainEvent {
     pub fn author_renamed(full_name: &str) -> Self {
-        DomainEvent::AuthorRenamed(AuthorRenamed::new(full_name))
+        DomainEvent::AuthorRenamed(AuthorRenamed {
+            full_name: String::from(full_name),
+        })
     }
 }
