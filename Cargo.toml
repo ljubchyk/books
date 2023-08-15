@@ -1,0 +1,14 @@
+[package]
+name = "playground"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1.72"
+dotenv = "0.15.0"
+futures = "0.3.28"
+serde = { version="1.0.164", features = ["derive"] }
+serde_json = "1.0.99"
+sqlx = { version = "0.7", features = [ "runtime-async-std", "postgres", "migrate" ] }
