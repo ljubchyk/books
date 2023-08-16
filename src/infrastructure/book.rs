@@ -81,15 +81,15 @@ impl<'a, 'b, 'c> BookRepository<'b, 'c> for DbBookRepository<'a, 'b, 'c> {
             None
         } else {
             let authors = rows.iter().map(|r| r.get("author_id")).collect();
-            let row = rows.first().unwrap();
-            let book = Book::new(
-                row.get("id"),
-                row.get("name"),
-                row.get("pages_count"),
-                authors,
-                self.publisher,
-            );
-            Some(book)
+            rows.first().map(|row| {
+                Book::new(
+                    row.get("id"),
+                    row.get("name"),
+                    row.get("pages_count"),
+                    authors,
+                    self.publisher,
+                )
+            })
         }
     }
 }
