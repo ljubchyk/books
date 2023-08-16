@@ -1,7 +1,6 @@
+use super::{DomainEvent, DomainEventPublisher};
 use async_trait::async_trait;
 use serde::Serialize;
-
-use super::{DomainEvent, DomainEventPublisher};
 
 pub struct Author<'a, 'b> {
     id: i32,

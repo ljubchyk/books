@@ -4,7 +4,7 @@ use crate::domain::{
     DomainEventPublisher,
 };
 use async_trait::async_trait;
-use sqlx::{postgres::PgRow, Row};
+use sqlx::Row;
 
 pub struct DbBookRepository<'a, 'b, 'c> {
     db: &'a DbUoW,
@@ -27,6 +27,15 @@ impl<'a, 'b, 'c> BookRepository<'b, 'c> for DbBookRepository<'a, 'b, 'c> {
             book.pages_count()
         );
         self.db.add(sql);
+
+        for author in book.authors() {
+            let sql = format!(
+                "insert into author_book(author_id, book_id) values ({}, {})",
+                author,
+                book.id(),
+            );
+            self.db.add(sql);
+        }
     }
 
     async fn next_identity(&self) -> i32 {
@@ -38,19 +47,28 @@ impl<'a, 'b, 'c> BookRepository<'b, 'c> for DbBookRepository<'a, 'b, 'c> {
     }
 
     async fn by_id(&self, id: i32) -> Option<Book<'b, 'c>> {
-        let row = sqlx::query("select * from book where id = $1")
-            .bind(id)
-            .fetch_optional(&self.db.pool)
-            .await
-            .unwrap();
-        row.map(|row: PgRow| {
-            Book::new(
+        let rows = sqlx::query(
+            "select * from book inner join author_book on author_book.book_id = id where id = $1",
+        )
+        .bind(id)
+        .fetch_all(&self.db.pool)
+        .await
+        .unwrap();
+
+        if rows.is_empty() {
+            None
+        } else {
+            let authors = rows.iter().map(|r| r.get("author_id")).collect();
+            let row = rows.first().unwrap();
+            let book = Book::new(
                 row.get("id"),
                 row.get("name"),
                 row.get("pages_count"),
+                authors,
                 self.publisher,
-            )
-        })
+            );
+            Some(book)
+        }
     }
 }
 
@@ -60,20 +78,20 @@ mod tests {
     use crate::application::UoW;
     use sqlx::PgPool;
 
-    #[sqlx::test()]
+    #[sqlx::test(fixtures("author"))]
     async fn book_create(pool: PgPool) {
         let publisher = DomainEventPublisher::new();
 
         let uow = DbUoW::new(pool);
         let repo = DbBookRepository::new(&uow, &publisher);
 
-        let book = Book::new(1, "book1", 100, &publisher);
+        let book = Book::new(1, "book1", 100, vec![1, 2], &publisher);
         repo.create(book);
 
         uow.commit().await;
     }
 
-    #[sqlx::test(fixtures("book"))]
+    #[sqlx::test(fixtures("author", "book"))]
     async fn get(pool: PgPool) {
         let publisher = DomainEventPublisher::new();
         let uow = DbUoW::new(pool);
@@ -86,5 +104,6 @@ mod tests {
         assert_eq!(book.id(), 1);
         assert_eq!(book.name(), "book1");
         assert_eq!(book.pages_count(), 100);
+        assert_eq!(book.authors(), vec![1, 2]);
     }
 }
