@@ -32,6 +32,28 @@ impl<'a, 'b, 'c> BookRepository<'b, 'c> for DbBookRepository<'a, 'b, 'c> {
             let sql = format!(
                 "insert into author_book(author_id, book_id) values ({}, {})",
                 author,
+                book.id()
+            );
+            self.db.add(sql);
+        }
+    }
+
+    fn update(&self, book: Book) {
+        let sql = format!(
+            "update book set name = '{}', pages_count = {} where id = {}",
+            book.name(),
+            book.pages_count(),
+            book.id()
+        );
+        self.db.add(sql);
+
+        let sql = format!("delete from author_book where book_id = {}", book.id());
+        self.db.add(sql);
+
+        for author in book.authors() {
+            let sql = format!(
+                "insert into author_book(author_id, book_id) values ({}, {})",
+                author,
                 book.id(),
             );
             self.db.add(sql);
@@ -85,10 +107,54 @@ mod tests {
         let uow = DbUoW::new(pool);
         let repo = DbBookRepository::new(&uow, &publisher);
 
-        let book = Book::new(10, "book1", 100, vec![1, 2], &publisher);
+        let book_id = 10;
+        let book = Book::new(book_id, "book10", 100, vec![1, 2], &publisher);
         repo.create(book);
 
         uow.commit().await;
+
+        let rows = sqlx::query(
+            "select * from book inner join author_book on author_book.book_id = id where id = $1",
+        )
+        .bind(book_id)
+        .fetch_all(&uow.pool)
+        .await
+        .unwrap();
+
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].get::<i32, _>("id"), 10);
+        assert_eq!(rows[0].get::<&str, _>("name"), "book10");
+        assert_eq!(rows[0].get::<i32, _>("pages_count"), 100);
+        assert_eq!(rows[0].get::<i32, _>("author_id"), 1);
+        assert_eq!(rows[1].get::<i32, _>("author_id"), 2);
+    }
+
+    #[sqlx::test(fixtures("book"))]
+    async fn update(pool: PgPool) {
+        let publisher = DomainEventPublisher::new();
+
+        let uow = DbUoW::new(pool);
+        let repo = DbBookRepository::new(&uow, &publisher);
+
+        let book_id = 1;
+        let book = Book::new(book_id, "book1-renamed", 10, vec![1], &publisher);
+        repo.update(book);
+
+        uow.commit().await;
+
+        let rows = sqlx::query(
+            "select * from book inner join author_book on author_book.book_id = id where id = $1",
+        )
+        .bind(book_id)
+        .fetch_all(&uow.pool)
+        .await
+        .unwrap();
+
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].get::<i32, _>("id"), 1);
+        assert_eq!(rows[0].get::<&str, _>("name"), "book1-renamed");
+        assert_eq!(rows[0].get::<i32, _>("pages_count"), 10);
+        assert_eq!(rows[0].get::<i32, _>("author_id"), 1);
     }
 
     #[sqlx::test(fixtures("book"))]
