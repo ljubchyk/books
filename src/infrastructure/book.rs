@@ -78,20 +78,20 @@ mod tests {
     use crate::application::UoW;
     use sqlx::PgPool;
 
-    #[sqlx::test(fixtures("author"))]
-    async fn book_create(pool: PgPool) {
+    #[sqlx::test(fixtures("book"))]
+    async fn create(pool: PgPool) {
         let publisher = DomainEventPublisher::new();
 
         let uow = DbUoW::new(pool);
         let repo = DbBookRepository::new(&uow, &publisher);
 
-        let book = Book::new(1, "book1", 100, vec![1, 2], &publisher);
+        let book = Book::new(10, "book1", 100, vec![1, 2], &publisher);
         repo.create(book);
 
         uow.commit().await;
     }
 
-    #[sqlx::test(fixtures("author", "book"))]
+    #[sqlx::test(fixtures("book"))]
     async fn get(pool: PgPool) {
         let publisher = DomainEventPublisher::new();
         let uow = DbUoW::new(pool);
