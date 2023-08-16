@@ -56,7 +56,9 @@ impl<'a, 'b> Author<'a, 'b> {
             self.full_name = Author::calculate_full_name(first_name, last_name);
 
             self.domain_event_publisher
-                .publish(&DomainEvent::author_renamed(&self.full_name));
+                .publish(&DomainEvent::AuthorRenamed(AuthorRenamed {
+                    full_name: String::from(&self.full_name),
+                }));
         }
     }
 
@@ -79,12 +81,4 @@ pub struct AuthorCreated {
 #[derive(Debug, Serialize)]
 pub struct AuthorRenamed {
     full_name: String,
-}
-
-impl DomainEvent {
-    pub fn author_renamed(full_name: &str) -> Self {
-        DomainEvent::AuthorRenamed(AuthorRenamed {
-            full_name: String::from(full_name),
-        })
-    }
 }

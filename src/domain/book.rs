@@ -29,7 +29,9 @@ impl<'a, 'b> Book<'a, 'b> {
         if self.name != name {
             self.name = String::from(name);
             self.domain_event_publisher
-                .publish(&DomainEvent::BookRenamed(BookRenamed {}));
+                .publish(&DomainEvent::BookCreated(BookCreated {
+                    name: String::from(name),
+                }));
         }
     }
 
@@ -60,11 +62,3 @@ pub struct BookCreated {
 
 #[derive(Debug, Serialize)]
 pub struct BookRenamed {}
-
-impl DomainEvent {
-    pub fn book_created(name: &str) -> Self {
-        DomainEvent::BookCreated(BookCreated {
-            name: String::from(name),
-        })
-    }
-}
