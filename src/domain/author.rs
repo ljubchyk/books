@@ -46,9 +46,9 @@ impl<'a, 'b> Author<'a, 'b> {
         &self.full_name
     }
 
-    pub fn rename(&mut self, first_name: &str, last_name: &str) {
-        assert!(first_name.is_empty());
-        assert!(last_name.is_empty());
+    pub fn update(&mut self, first_name: &str, last_name: &str) {
+        assert!(!first_name.is_empty());
+        assert!(!last_name.is_empty());
 
         if first_name != self.first_name || last_name != self.last_name {
             self.first_name = String::from(first_name);

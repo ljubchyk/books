@@ -1,7 +1,6 @@
+use super::{DomainEvent, DomainEventPublisher};
 use async_trait::async_trait;
 use serde::Serialize;
-
-use super::{DomainEvent, DomainEventPublisher};
 
 pub struct Book<'a, 'b> {
     id: i32,
@@ -17,6 +16,9 @@ impl<'a, 'b> Book<'a, 'b> {
         pages_count: i32,
         domain_event_publisher: &'a DomainEventPublisher<'b>,
     ) -> Self {
+        assert!(!name.is_empty());
+        assert!(pages_count > 0);
+
         Self {
             id,
             name: String::from(name),
@@ -25,7 +27,10 @@ impl<'a, 'b> Book<'a, 'b> {
         }
     }
 
-    pub fn rename(&mut self, name: &str) {
+    pub fn update(&mut self, name: &str, pages_count: i32) {
+        assert!(!name.is_empty());
+        assert!(pages_count > 0);
+
         if self.name != name {
             self.name = String::from(name);
             self.domain_event_publisher
@@ -33,6 +38,8 @@ impl<'a, 'b> Book<'a, 'b> {
                     name: String::from(name),
                 }));
         }
+
+        self.pages_count = pages_count;
     }
 
     pub fn id(&self) -> i32 {
