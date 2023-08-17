@@ -7,7 +7,7 @@ pub struct Author<'a, 'b> {
     first_name: String,
     last_name: String,
     full_name: String,
-    domain_event_publisher: &'a DomainEventPublisher<'b>,
+    publisher: &'a DomainEventPublisher<'b>,
 }
 
 impl<'a, 'b> Author<'a, 'b> {
@@ -16,14 +16,14 @@ impl<'a, 'b> Author<'a, 'b> {
         first_name: &str,
         last_name: &str,
         full_name: &str,
-        domain_event_publisher: &'a DomainEventPublisher<'b>,
+        publisher: &'a DomainEventPublisher<'b>,
     ) -> Self {
         Self {
             id,
             first_name: String::from(first_name),
             last_name: String::from(last_name),
             full_name: String::from(full_name),
-            domain_event_publisher,
+            publisher,
         }
     }
 
@@ -31,18 +31,27 @@ impl<'a, 'b> Author<'a, 'b> {
         id: i32,
         first_name: &str,
         last_name: &str,
-        domain_event_publisher: &'a DomainEventPublisher<'b>,
+        publisher: &'a DomainEventPublisher<'b>,
     ) -> Self {
         assert!(!first_name.is_empty());
         assert!(!last_name.is_empty());
 
-        Self {
+        let author = Self {
             id,
             first_name: String::from(first_name),
             last_name: String::from(last_name),
             full_name: Author::calculate_full_name(first_name, last_name),
-            domain_event_publisher,
-        }
+            publisher,
+        };
+
+        publisher.publish(&DomainEvent::AuthorCreated(AuthorCreated {
+            id,
+            first_name: String::from(first_name),
+            last_name: String::from(last_name),
+            full_name: String::from(&author.full_name),
+        }));
+
+        author
     }
 
     pub fn id(&self) -> i32 {
@@ -70,8 +79,11 @@ impl<'a, 'b> Author<'a, 'b> {
             self.last_name = String::from(last_name);
             self.full_name = Author::calculate_full_name(first_name, last_name);
 
-            self.domain_event_publisher
-                .publish(&DomainEvent::AuthorRenamed(AuthorRenamed {
+            self.publisher
+                .publish(&DomainEvent::AuthorCreated(AuthorCreated {
+                    id: self.id,
+                    first_name: String::from(first_name),
+                    last_name: String::from(last_name),
                     full_name: String::from(&self.full_name),
                 }));
         }
@@ -92,10 +104,16 @@ pub trait AuthorRepository<'a, 'b> {
 
 #[derive(Debug, Serialize)]
 pub struct AuthorCreated {
+    id: i32,
+    first_name: String,
+    last_name: String,
     full_name: String,
 }
 
 #[derive(Debug, Serialize)]
 pub struct AuthorRenamed {
+    id: i32,
+    first_name: String,
+    last_name: String,
     full_name: String,
 }

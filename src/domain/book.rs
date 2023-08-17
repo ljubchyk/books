@@ -7,7 +7,7 @@ pub struct Book<'a, 'b> {
     name: String,
     pages_count: i32,
     authors: Vec<i32>,
-    domain_event_publisher: &'a DomainEventPublisher<'b>,
+    publisher: &'a DomainEventPublisher<'b>,
 }
 
 impl<'a, 'b> Book<'a, 'b> {
@@ -16,14 +16,14 @@ impl<'a, 'b> Book<'a, 'b> {
         name: &str,
         pages_count: i32,
         authors: Vec<i32>,
-        domain_event_publisher: &'a DomainEventPublisher<'b>,
+        publisher: &'a DomainEventPublisher<'b>,
     ) -> Self {
         Self {
             id,
             name: String::from(name),
             pages_count,
             authors,
-            domain_event_publisher,
+            publisher,
         }
     }
 
@@ -32,19 +32,28 @@ impl<'a, 'b> Book<'a, 'b> {
         name: &str,
         pages_count: i32,
         authors: Vec<i32>,
-        domain_event_publisher: &'a DomainEventPublisher<'b>,
+        publisher: &'a DomainEventPublisher<'b>,
     ) -> Self {
         assert!(!name.is_empty());
         assert!(pages_count.is_positive());
         assert!(!authors.is_empty());
 
-        Self {
+        let book = Self {
+            id,
+            name: String::from(name),
+            pages_count,
+            authors: authors.clone(),
+            publisher,
+        };
+
+        publisher.publish(&DomainEvent::BookCreated(BookCreated {
             id,
             name: String::from(name),
             pages_count,
             authors,
-            domain_event_publisher,
-        }
+        }));
+
+        book
     }
 
     pub fn update(&mut self, name: &str, pages_count: i32, authors: Vec<i32>) {
@@ -54,8 +63,9 @@ impl<'a, 'b> Book<'a, 'b> {
 
         if self.name != name {
             self.name = String::from(name);
-            self.domain_event_publisher
-                .publish(&DomainEvent::BookCreated(BookCreated {
+            self.publisher
+                .publish(&DomainEvent::BookRenamed(BookRenamed {
+                    id: self.id,
                     name: String::from(name),
                 }));
         }
@@ -91,8 +101,14 @@ pub trait BookRepository<'a, 'b> {
 
 #[derive(Debug, Serialize)]
 pub struct BookCreated {
+    id: i32,
     name: String,
+    pages_count: i32,
+    authors: Vec<i32>,
 }
 
 #[derive(Debug, Serialize)]
-pub struct BookRenamed {}
+pub struct BookRenamed {
+    id: i32,
+    name: String,
+}
