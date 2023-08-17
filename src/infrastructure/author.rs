@@ -42,11 +42,11 @@ impl<'a, 'b, 'c> AuthorRepository<'b, 'c> for DbAuthorRepository<'a, 'b, 'c> {
     }
 
     async fn next_identity(&self) -> i32 {
-        let id: (i32,) = sqlx::query_as("select nextval(pg_get_serial_sequence('author', 'id'))")
+        let id: (i64,) = sqlx::query_as("select nextval(pg_get_serial_sequence('author', 'id'))")
             .fetch_one(&self.db.pool)
             .await
             .unwrap();
-        id.0
+        id.0 as i32
     }
 
     async fn by_id(&self, id: i32) -> Option<Author<'b, 'c>> {
@@ -72,6 +72,17 @@ mod test {
     use super::*;
     use crate::{application::UoW, domain::author::Author};
     use sqlx::PgPool;
+
+    #[sqlx::test(fixtures("author"))]
+    fn next_identity(pool: PgPool) {
+        let uow = DbUoW::new(pool);
+        let publisher = DomainEventPublisher::new();
+        let repo = DbAuthorRepository::new(&uow, &publisher);
+
+        let id = repo.next_identity().await;
+
+        assert_eq!(id, 3);
+    }
 
     #[sqlx::test(fixtures("author"))]
     fn create(pool: PgPool) {
