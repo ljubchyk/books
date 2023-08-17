@@ -1,5 +1,6 @@
 pub mod author;
 pub mod book;
+mod book_projector;
 
 use crate::domain::{DomainEvent, DomainEventPublisher};
 use async_trait::async_trait;

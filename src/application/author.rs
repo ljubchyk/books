@@ -10,10 +10,18 @@ pub async fn create(
 ) {
     let publisher = DomainEventPublisher::new();
     begin(&publisher, event_store);
+    book_projector::create(&publisher);
 
     let id = author_repository.next_identity().await;
     let author = Author::new(id, first_name, last_name, &publisher);
     author_repository.create(&author);
 
     success(uow).await;
+}
+
+#[cfg(test)]
+mod test {
+
+    #[test]
+    fn create() {}
 }
