@@ -67,8 +67,8 @@ impl<'a, 'b> Book<'a, 'b> {
 
 #[async_trait]
 pub trait BookRepository<'a, 'b> {
-    fn create(&self, book: Book);
-    fn update(&self, book: Book);
+    fn create(&self, book: &Book);
+    fn update(&self, book: &Book);
     async fn next_identity(&self) -> i32;
     async fn by_id(&self, id: i32) -> Option<Book<'a, 'b>>;
 }

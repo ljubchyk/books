@@ -14,7 +14,7 @@ pub async fn create<'a>(
 
     let id = book_repository.next_identity().await;
     let book = Book::new(id, name, pages_count, authors, &publisher);
-    book_repository.create(book);
+    book_repository.create(&book);
 
     success(uow).await;
 }

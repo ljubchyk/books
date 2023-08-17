@@ -19,7 +19,7 @@ impl<'a, 'b, 'c> DbBookRepository<'a, 'b, 'c> {
 
 #[async_trait]
 impl<'a, 'b, 'c> BookRepository<'b, 'c> for DbBookRepository<'a, 'b, 'c> {
-    fn create(&self, book: Book) {
+    fn create(&self, book: &Book) {
         let sql = format!(
             "insert into book(id, name, pages_count) values ({}, '{}', {})",
             book.id(),
@@ -38,7 +38,7 @@ impl<'a, 'b, 'c> BookRepository<'b, 'c> for DbBookRepository<'a, 'b, 'c> {
         }
     }
 
-    fn update(&self, book: Book) {
+    fn update(&self, book: &Book) {
         let sql = format!(
             "update book set name = '{}', pages_count = {} where id = {}",
             book.name(),
@@ -95,7 +95,7 @@ impl<'a, 'b, 'c> BookRepository<'b, 'c> for DbBookRepository<'a, 'b, 'c> {
 }
 
 #[cfg(test)]
-mod tests {
+mod test {
     use super::*;
     use crate::application::UoW;
     use sqlx::PgPool;
@@ -109,7 +109,7 @@ mod tests {
 
         let book_id = 10;
         let book = Book::new(book_id, "book10", 100, vec![1, 2], &publisher);
-        repo.create(book);
+        repo.create(&book);
 
         uow.commit().await;
 
@@ -138,7 +138,7 @@ mod tests {
 
         let book_id = 1;
         let book = Book::new(book_id, "book1-renamed", 10, vec![1], &publisher);
-        repo.update(book);
+        repo.update(&book);
 
         uow.commit().await;
 

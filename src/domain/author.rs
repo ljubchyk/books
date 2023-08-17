@@ -69,9 +69,11 @@ impl<'a, 'b> Author<'a, 'b> {
 #[async_trait]
 pub trait AuthorRepository<'a, 'b> {
     fn create(&self, author: &Author);
+    fn update(&self, author: &Author);
     async fn next_identity(&self) -> i32;
     async fn by_id(&self, id: i32) -> Option<Author<'a, 'b>>;
 }
+
 #[derive(Debug, Serialize)]
 pub struct AuthorCreated {
     full_name: String,
