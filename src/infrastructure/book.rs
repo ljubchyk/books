@@ -82,7 +82,7 @@ impl<'a, 'b, 'c> BookRepository<'b, 'c> for DbBookRepository<'a, 'b, 'c> {
         } else {
             let authors = rows.iter().map(|r| r.get("author_id")).collect();
             rows.first().map(|row| {
-                Book::new(
+                Book::materialize(
                     row.get("id"),
                     row.get("name"),
                     row.get("pages_count"),
@@ -118,7 +118,7 @@ mod test {
         let repo = DbBookRepository::new(&uow, &publisher);
 
         let book_id = 10;
-        let book = Book::new(book_id, "book10", 100, vec![1, 2], &publisher);
+        let book = Book::materialize(book_id, "book10", 100, vec![1, 2], &publisher);
         repo.create(&book);
 
         uow.commit().await;
@@ -147,7 +147,7 @@ mod test {
         let repo = DbBookRepository::new(&uow, &publisher);
 
         let book_id = 1;
-        let book = Book::new(book_id, "book1-renamed", 10, vec![1], &publisher);
+        let book = Book::materialize(book_id, "book1-renamed", 10, vec![1], &publisher);
         repo.update(&book);
 
         uow.commit().await;

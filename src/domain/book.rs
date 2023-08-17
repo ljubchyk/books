@@ -11,6 +11,22 @@ pub struct Book<'a, 'b> {
 }
 
 impl<'a, 'b> Book<'a, 'b> {
+    pub fn materialize(
+        id: i32,
+        name: &str,
+        pages_count: i32,
+        authors: Vec<i32>,
+        domain_event_publisher: &'a DomainEventPublisher<'b>,
+    ) -> Self {
+        Self {
+            id,
+            name: String::from(name),
+            pages_count,
+            authors,
+            domain_event_publisher,
+        }
+    }
+
     pub fn new(
         id: i32,
         name: &str,

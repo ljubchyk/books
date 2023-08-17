@@ -11,6 +11,22 @@ pub struct Author<'a, 'b> {
 }
 
 impl<'a, 'b> Author<'a, 'b> {
+    pub fn materialize(
+        id: i32,
+        first_name: &str,
+        last_name: &str,
+        full_name: &str,
+        domain_event_publisher: &'a DomainEventPublisher<'b>,
+    ) -> Self {
+        Self {
+            id,
+            first_name: String::from(first_name),
+            last_name: String::from(last_name),
+            full_name: String::from(full_name),
+            domain_event_publisher,
+        }
+    }
+
     pub fn new(
         id: i32,
         first_name: &str,

@@ -53,10 +53,11 @@ impl<'a, 'b, 'c> AuthorRepository<'b, 'c> for DbAuthorRepository<'a, 'b, 'c> {
         let author = sqlx::query("select * from author where id = $1")
             .bind(id)
             .map(|row: PgRow| {
-                Author::new(
+                Author::materialize(
                     row.get("id"),
                     row.get("first_name"),
                     row.get("last_name"),
+                    row.get("full_name"),
                     self.publisher,
                 )
             })
@@ -91,7 +92,7 @@ mod test {
         let repo = DbAuthorRepository::new(&uow, &publisher);
 
         let author_id = 10;
-        let author = Author::new(author_id, "f", "l", &publisher);
+        let author = Author::materialize(author_id, "f", "l", "full", &publisher);
         repo.create(&author);
 
         uow.commit().await;
@@ -106,7 +107,7 @@ mod test {
         assert_eq!(rows[0].get::<i32, _>("id"), author_id);
         assert_eq!(rows[0].get::<&str, _>("first_name"), "f");
         assert_eq!(rows[0].get::<&str, _>("last_name"), "l");
-        assert_eq!(rows[0].get::<&str, _>("full_name"), "f l");
+        assert_eq!(rows[0].get::<&str, _>("full_name"), "full");
     }
 
     #[sqlx::test(fixtures("author"))]
@@ -116,7 +117,13 @@ mod test {
         let repo = DbAuthorRepository::new(&uow, &publisher);
 
         let author_id = 1;
-        let author = Author::new(author_id, "f1-renamed", "l1-renamed", &publisher);
+        let author = Author::materialize(
+            author_id,
+            "f1-renamed",
+            "l1-renamed",
+            "full-renamed",
+            &publisher,
+        );
         repo.update(&author);
 
         uow.commit().await;
@@ -131,7 +138,7 @@ mod test {
         assert_eq!(rows[0].get::<i32, _>("id"), author_id);
         assert_eq!(rows[0].get::<&str, _>("first_name"), "f1-renamed");
         assert_eq!(rows[0].get::<&str, _>("last_name"), "l1-renamed");
-        assert_eq!(rows[0].get::<&str, _>("full_name"), "f1-renamed l1-renamed");
+        assert_eq!(rows[0].get::<&str, _>("full_name"), "full-renamed");
     }
 
     #[sqlx::test(fixtures("author"))]
