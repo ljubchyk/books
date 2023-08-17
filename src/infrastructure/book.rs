@@ -61,7 +61,8 @@ impl<'a, 'b, 'c> BookRepository<'b, 'c> for DbBookRepository<'a, 'b, 'c> {
     }
 
     async fn next_identity(&self) -> i32 {
-        let id: (i64,) = sqlx::query_as("select nextval(pg_get_serial_sequence('book', 'id'))")
+        // let id: (i64,) = sqlx::query_as("select nextval(pg_get_serial_sequence('book', 'id'))")
+        let id: (i64,) = sqlx::query_as("select nextval('book_id_seq')")
             .fetch_one(&self.db.pool)
             .await
             .unwrap();
@@ -102,6 +103,11 @@ mod test {
 
     #[sqlx::test(fixtures("book"))]
     fn next_identity(pool: PgPool) {
+        sqlx::query("select setval('book_id_seq', 1)")
+            .execute(&pool)
+            .await
+            .unwrap();
+
         let uow = DbUoW::new(pool);
         let publisher = DomainEventPublisher::new();
         let repo = DbBookRepository::new(&uow, &publisher);
